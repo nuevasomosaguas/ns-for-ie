@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NS para IE</title>
+<meta name="description" content="La prueba de acceso inversa: cinco preguntas para saber si el máster de 35.000 euros dejó algo debajo del barniz.">
+<link rel="icon" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,700;1,6..72,400&display=swap" rel="stylesheet">
+<style>
+/* Los tokens de styles.css del sitio principal, con su modo oscuro */
+:root {
+  --bg: #fffff8; --text: #111111; --accent: #800000; --muted: #555555;
+  --code-bg: #f5f5ee; --border: #e0e0d8; --bar: #1a1a1a; --bar-fg: #f8f9fa;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #17170f; --text: #e9e6da; --accent: #e2938f; --muted: #a9a498;
+    --code-bg: #24241c; --border: #3a382e; --bar: #0d0d08;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #17170f; --text: #e9e6da; --accent: #e2938f; --muted: #a9a498;
+  --code-bg: #24241c; --border: #3a382e; --bar: #0d0d08;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 19px/1.6 'Newsreader', 'ET Book', Garamond, Georgia, serif;
+  -webkit-font-smoothing: antialiased;
+}
+nav {
+  position: sticky; top: 0; z-index: 2; background: var(--bar); color: var(--bar-fg);
+  display: flex; align-items: center; gap: .7rem; padding: .45rem 16px; font-size: .9rem;
+}
+nav img { width: 30px; height: 30px; }
+nav b { flex: 1; }
+nav #capas { font-family: 'Fira Code', monospace; font-size: .8rem; white-space: nowrap; }
+main { max-width: 760px; margin: 0 auto; padding: 1.5rem 16px 3rem; }
+h1, h2, h3 { color: var(--accent); line-height: 1.25; margin: 2rem 0 .8rem; }
+h1 { font-size: 2.3rem; border-bottom: 2px solid var(--accent); padding-bottom: .4rem; margin-top: .5rem; }
+h2 { font-size: 1.6rem; margin-top: 3rem; }
+.subtitulo { font-style: italic; color: var(--muted); font-size: 1.15rem; margin-top: -.3rem; }
+a { color: var(--accent); text-underline-offset: 3px; text-decoration-thickness: 1px; }
+code, pre, .mono { font-family: 'Fira Code', monospace; font-size: .85em; }
+code { background: var(--code-bg); border: 1px solid var(--border); border-radius: 3px; padding: .1em .3em; }
+.hero { background: var(--code-bg); border-bottom: 2px solid var(--border); padding: 1.2rem 1.4rem .3rem; margin: 1.5rem 0 2rem; }
+.aviso { border-left: 3px solid var(--accent); padding-left: 1rem; color: var(--muted); font-size: .9rem; }
+table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: .92em; }
+th, td { padding: .5rem .6rem; text-align: left; vertical-align: top; }
+th { border-bottom: 2px solid var(--text); }
+td { border-bottom: 1px solid var(--border); }
+tr:last-child td { border-bottom: 2px solid var(--text); }
+.tabla { overflow-x: auto; }
+.dag { display: block; width: 100%; max-width: 420px; margin: 1rem auto; }
+.opciones { display: grid; gap: .5rem; margin: 1rem 0; }
+.opciones button, .boton {
+  font: inherit; font-size: .95rem; text-align: left; cursor: pointer;
+  background: var(--bg); color: var(--text); border: 1px solid var(--border);
+  border-left: 3px solid var(--border); padding: .6rem .8rem; border-radius: 0 4px 4px 0;
+}
+.opciones button:hover:enabled, .boton:hover { border-left-color: var(--accent); background: var(--code-bg); }
+.opciones button:disabled { cursor: default; opacity: .55; }
+.opciones button.bien { opacity: 1; border-left-color: #2e7d32; }
+.opciones button.mal { opacity: 1; border-left-color: var(--accent); text-decoration: line-through; }
+.boton { display: inline-block; text-align: center; border: 1px solid var(--accent); color: var(--accent); }
+.porque { background: var(--code-bg); border-left: 3px solid var(--accent); padding: .8rem 1rem; border-radius: 0 4px 4px 0; }
+.porque p:first-child { margin-top: 0; } .porque p:last-child { margin-bottom: 0; }
+.demo { border: 1px solid var(--border); padding: 1rem; margin: 1.2rem 0; border-radius: 4px; }
+.demo h3 { margin: 0 0 .5rem; font-size: 1.1rem; font-style: italic; }
+.salida { font-family: 'Fira Code', monospace; font-size: .8rem; white-space: pre-wrap; margin: .8rem 0 0; }
+canvas { width: 100%; max-width: 360px; aspect-ratio: 1; display: block; margin: .8rem auto; image-rendering: pixelated; border: 1px solid var(--border); }
+.celda { display: flex; gap: .6rem; align-items: baseline; margin: .3rem 0; cursor: pointer; }
+.celda .n { color: var(--muted); width: 4.5em; flex: none; font-family: 'Fira Code', monospace; font-size: .8rem; }
+.celda code { flex: 1; padding: .4rem .6rem; }
+.celda:hover code { border-color: var(--accent); }
+.diploma {
+  border: 6px double var(--accent); padding: 2rem 1.5rem; text-align: center; margin: 2rem 0;
+  background: var(--code-bg);
+}
+.diploma img { width: 64px; }
+.diploma .grande { font-size: 1.6rem; color: var(--accent); font-weight: 700; margin: .5rem 0; }
+footer { border-top: 1px solid var(--border); margin-top: 3rem; padding-top: 1rem; font-size: .85rem; color: var(--muted); text-align: center; }
+.chapas { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-top: 1rem; }
+.chapas span {
+  width: 88px; height: 31px; display: grid; place-items: center; text-align: center;
+  font: 700 9px/1.1 'Fira Code', monospace; border: 1px solid var(--accent);
+}
+.chapas span:first-child { background: var(--accent); color: var(--bg); }
+</style>
+</head>
+<body>
+
+<nav>
+  <img src="logo.png" alt="Sello de la Nueva Somosaguas">
+  <b>Nueva Somosaguas</b>
+  <span id="capas">barniz ○○○○○</span>
+</nav>
+
+<main>
+
+<h1>NS para IE</h1>
+<p class="subtitulo">La prueba de acceso inversa: no sirve para entrar en un máster, sino para saber si el que ya pagó dejó algo debajo del barniz.</p>
+
+<div class="hero">
+<p>Este sitio está optimizado para <b>IE</b>. Elija usted cuál.</p>
+<p class="aviso">Internet Explorer se jubiló el 15 de junio de 2022. Hay temarios que todavía no se han enterado.</p>
+</div>
+
+<p>Cinco preguntas. Cada una tiene una respuesta con identificación formal y tres respuestas que quedan muy bien en una diapositiva. Cada diapositiva que elija suma una <b>capa de barniz</b>, arriba a la derecha. Al final se expide un certificado.</p>
+
+<div class="tabla"><table>
+<tr><th></th><th>Máster ejecutivo</th><th>Nueva Somosaguas</th></tr>
+<tr><td>Matrícula</td><td>35.000 euros</td><td>0 euros</td></tr>
+<tr><td>Herramienta estrella</td><td>arrastrar tarjetas</td><td><code>make</code></td></tr>
+<tr><td>Método de estimación</td><td><code>.fit()</code></td><td>identificar antes de estimar</td></tr>
+<tr><td>Networking</td><td>cóctel en terraza</td><td>issues de GitHub</td></tr>
+<tr><td>Vida útil del barniz</td><td>hasta la primera entrevista técnica</td><td>no aplica: no lleva</td></tr>
+</table></div>
+
+<!-- ============ 1 ============ -->
+<h2>1. El colisionador</h2>
+<p>Quiere el efecto causal total de <i>X</i> sobre <i>W</i>, y el DAG es este:</p>
+<svg class="dag" viewBox="0 0 420 70" role="img" aria-label="X causa Y; Z causa Y; Z causa W">
+  <defs><marker id="f" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--accent)"/></marker></defs>
+  <g stroke="var(--accent)" stroke-width="2.5" marker-end="url(#f)">
+    <line x1="69" y1="35" x2="134" y2="35"/><line x1="251" y1="35" x2="186" y2="35"/><line x1="299" y1="35" x2="364" y2="35"/>
+  </g>
+  <g fill="var(--bg)" stroke="var(--text)" stroke-width="2"><circle cx="45" cy="35" r="22"/><circle cx="160" cy="35" r="22"/><circle cx="275" cy="35" r="22"/><circle cx="390" cy="35" r="22"/></g>
+  <g font-family="Newsreader, Georgia, serif" font-style="italic" font-size="22" fill="var(--text)" text-anchor="middle">
+    <text x="45" y="42">X</text><text x="160" y="42">Y</text><text x="275" y="42">Z</text><text x="390" y="42">W</text>
+  </g>
+</svg>
+<p style="text-align:center;margin-top:-.5rem"><span class="mono">X → Y ← Z → W</span></p>
+<p>Su jefe de equipo sugiere meter <i>Y</i> en la regresión «por si acaso». ¿Qué hace usted?</p>
+<div class="opciones" data-ok="2">
+  <button>Meter <i>Y</i>. Cuantos más controles, más robusto: es <i>best practice</i>.</button>
+  <button>Da igual: con suficiente <i>big data</i> el sesgo se diluye.</button>
+  <button>No meter <i>Y</i>: es un colisionador. Sin condicionar, el camino está bloqueado y <i>X</i> ⫫ <i>W</i>; si condiciona por <i>Y</i>, lo abre y fabrica una asociación.</button>
+  <button>Sustituir la regresión por un <i>random forest</i>, que captura las no linealidades.</button>
+</div>
+<div class="porque" hidden>
+<p><i>Y</i> recibe dos flechas en <span class="mono">X → Y ← Z</span>: es un colisionador, y por la <i>d</i>-separación un colisionador no condicionado bloquea el camino. Condicionar por él (o por cualquier descendiente) lo abre: dentro de cada valor de <i>Y</i>, saber <i>X</i> informa sobre <i>Z</i>, y <i>Z</i> causa <i>W</i>. Es la paradoja de Berkson. Ni el volumen de datos ni el algoritmo lo arreglan: el sesgo está en la pregunta, no en la muestra.</p>
+</div>
+<div class="demo">
+  <h3>Demuéstremelo</h3>
+  <p>10.000 casos simulados con el DAG de arriba. El efecto real de <i>X</i> sobre <i>W</i> es exactamente cero.</p>
+  <button class="boton" onclick="colisionador()">Estimar las dos regresiones</button>
+  <div class="salida" id="s1"></div>
+</div>
+
+<!-- ============ 2 ============ -->
+<h2>2. Los 40 <i>insights</i></h2>
+<p>Una consultora contrasta 1.000 métricas de usuario frente a una campaña y encuentra 40 con <i>p</i> &lt; 0,05. Ordenados, ningún <i>p</i><sub>(<i>k</i>)</sub> cumple <i>p</i><sub>(<i>k</i>)</sub> ≤ (<i>k</i>/1.000)·0,05. ¿Cuántos descubrimientos puede declarar?</p>
+<div class="opciones" data-ok="3">
+  <button>40: están en el informe, con gráficos.</button>
+  <button>40, más las que salen con <i>p</i> &lt; 0,10, que muestran tendencia a la significación.</button>
+  <button>Los 40 son <i>insights</i> accionables; se validan en el próximo <i>sprint</i>.</button>
+  <button>Cero. Con Benjamini-Hochberg a <i>q</i> = 0,05, si ningún <i>k</i> pasa el umbral, <i>k</i> = 0. Y con 1.000 nulas ciertas se esperan unos 50 <i>p</i> &lt; 0,05 por puro ruido.</button>
+</div>
+<div class="porque" hidden>
+<p>Con 1.000 contrastes y la nula global cierta, la probabilidad de al menos un falso positivo es 1 − 0,95<sup>1.000</sup> ≈ 1, y el número esperado de <i>p</i> &lt; 0,05 es 50. La consultora encontró 40: menos de lo que regala el ruido. El procedimiento correcto: ordenar los <i>p</i>-valores, buscar el mayor <i>k</i> con <i>p</i><sub>(<i>k</i>)</sub> ≤ (<i>k</i>/<i>m</i>)·<i>q</i>, y rechazar los <i>k</i> primeros. Aquí no hay ninguno. Hay un sitio entero dedicado a esto: <a href="https://nuevasomosaguas.github.io/fdrmania/">FDRmania</a>.</p>
+</div>
+<div class="demo">
+  <h3>Fabrique su propio informe</h3>
+  <p>1.000 métricas en las que la campaña no hace absolutamente nada.</p>
+  <button class="boton" onclick="consultora()">Generar informe para el cliente</button>
+  <div class="salida" id="s2"></div>
+</div>
+
+<!-- ============ 3 ============ -->
+<h2>3. El número de condición</h2>
+<p>Matriz de clientes <i>X</i> de 50.000 × 200, centrada. Al calcular su SVD, <i>X</i> = <i>U</i>Σ<i>V</i>ᵀ, encuentra σ₁₅/σ₁ = 10⁻⁷. ¿Qué le pasa a β̂ = (<i>X</i>ᵀ<i>X</i>)⁻¹<i>X</i>ᵀ<i>y</i>?</p>
+<div class="opciones" data-ok="1">
+  <button>Nada: la nube escala sola.</button>
+  <button>κ(<i>X</i>ᵀ<i>X</i>) = (σ₁/σₚ)² ≥ 10¹⁴. La doble precisión tiene unas 16 cifras, así que la inversión pierde casi todas: multicolinealidad severa, rango numérico deficiente y varianzas disparadas. Se resuelve con QR o SVD, o regularizando.</button>
+  <button>Se quita la variable con menos «importancia» en el <i>dashboard</i>.</button>
+  <button>Se compra una GPU más grande.</button>
+</div>
+<div class="porque" hidden>
+<p>Los valores propios de la covarianza son λᵢ = σᵢ²/(<i>n</i> − 1): elevar al cuadrado los valores singulares eleva al cuadrado el número de condición. Con κ ≈ 10¹⁴ y unas 16 cifras de mantisa en IEEE 754, sobreviven unas dos cifras significativas en los coeficientes, si sobreviven. Una GPU más grande pierde las mismas cifras, solo que antes. Pruebe en la consola de su navegador: <code>1 + 1e-16 === 1</code> devuelve <code>true</code>.</p>
+</div>
+
+<!-- ============ 4 ============ -->
+<h2>4. Schelling y los tolerantes</h2>
+<p>En un retículo, cada agente se muda solo si menos de un tercio de sus vecinos son de su grupo. Es decir, todos aceptan vivir en minoría de dos a uno. ¿Qué segregación sale?</p>
+<div class="opciones" data-ok="2">
+  <button>Baja: si la gente es tolerante, el barrio es tolerante.</button>
+  <button>La que estime una regresión de intolerancia declarada sobre segregación por barrio.</button>
+  <button>Alta, muy por encima de lo que nadie pedía: pequeños reajustes desencadenan cascadas, y el patrón macro no es una copia de los deseos micro.</button>
+  <button>Depende del <i>engagement</i> de la comunidad.</button>
+</div>
+<div class="porque" hidden>
+<p>En términos DBO de Hedström: el <b>deseo</b> es no quedar en minoría extrema (τ = 1/3), la <b>creencia</b> es el recuento de los ocho vecinos de Moore y la <b>oportunidad</b>, las casillas vacías. La agregación no es lineal: una regresión transversal de intolerancia sobre segregación supone que el barrio refleja a sus vecinos y comete la falacia ecológica, porque el mecanismo está en la dinámica de umbrales, no en la media de las preferencias. Por eso se simula.</p>
+</div>
+<div class="demo">
+  <h3>Véalo pasar</h3>
+  <p>40 × 40 casillas, dos grupos, 10% vacías, τ = 1/3.</p>
+  <canvas id="lienzo" width="40" height="40" aria-label="Retículo de Schelling"></canvas>
+  <button class="boton" onclick="schelling()">Soltar a los vecinos</button>
+  <div class="salida" id="s4"></div>
+</div>
+
+<!-- ============ 5 ============ -->
+<h2>5. El TFM en <code>.ipynb</code></h2>
+<p>El candidato entrega su trabajo final en un cuaderno de Jupyter. ¿Es reproducible?</p>
+<div class="opciones" data-ok="0">
+  <button>No está garantizado: el estado del kernel es mutable y el orden en que se ejecutaron las celdas no queda en el archivo. Hace falta un <code>Makefile</code> que vaya de <code>data/raw.csv</code> de solo lectura a <code>paper.pdf</code>, con semillas fijadas y un <i>lockfile</i>.</button>
+  <button>Sí: el cuaderno guarda las salidas, así que se ve que funciona.</button>
+  <button>Sí, si se exporta a PDF.</button>
+  <button>Sí: está en SharePoint como <code>TFM_final_v3_DEFINITIVO(2).ipynb</code>.</button>
+</div>
+<div class="porque" hidden>
+<p>Un cuaderno guarda lo último que se vio, no cómo se llegó. La versión honrada es una cadena de dependencias que cualquiera reconstruye con una orden:</p>
+<pre style="background:var(--bg);padding:.8rem;overflow-x:auto;margin:0"><code style="border:0;background:none">all: paper.pdf
+
+data/clean.parquet: data/raw.csv src/clean.R
+	Rscript src/clean.R
+
+output/dag.pdf: data/clean.parquet src/model.R
+	Rscript src/model.R
+
+paper.pdf: paper.qmd data/clean.parquet output/dag.pdf
+	quarto render paper.qmd --to pdf</code></pre>
+<p>Con <code>set.seed()</code> al principio de cada script y las versiones fijadas en <code>renv.lock</code>, un flake de Nix o una imagen de contenedor.</p>
+</div>
+<div class="demo">
+  <h3>El kernel recuerda lo que el archivo olvida</h3>
+  <p>Ejecute las celdas en el orden que quiera, las veces que quiera.</p>
+  <div id="cuaderno"></div>
+  <button class="boton" onclick="reiniciar()">Reiniciar el kernel</button>
+</div>
+
+<div id="veredicto" hidden></div>
+
+<footer>
+  <p>Anillo de la Nueva Somosaguas:
+    <a href="https://nuevasomosaguas.github.io/fdrmania/">← FDRmania</a> ·
+    <a href="https://nuevasomosaguas.github.io/">Hub central</a> ·
+    <a href="https://nuevasomosaguas.github.io/biblioteca.html">Biblioteca</a></p>
+  <div class="chapas">
+    <span>BEST VIEWED<br>WITH IE</span>
+    <span>CERO<br>EUROS</span>
+    <span>SIN<br>.fit()</span>
+    <span>make<br>all</span>
+  </div>
+</footer>
+
+</main>
+
+<script>
+var coma = function (x, d) { return x.toFixed(d).replace(".", ",").replace("-", "−"); };
+function normal() { return Math.sqrt(-2 * Math.log(1 - Math.random())) * Math.cos(2 * Math.PI * Math.random()); }
+
+// ---- El test y el barnizómetro ----
+var respondidas = 0, capas = 0;
+document.querySelectorAll(".opciones").forEach(function (grupo) {
+  var ok = +grupo.dataset.ok, botones = grupo.querySelectorAll("button");
+  botones.forEach(function (b, i) {
+    b.onclick = function () {
+      botones.forEach(function (x) { x.disabled = true; });
+      botones[ok].classList.add("bien");
+      if (i !== ok) { b.classList.add("mal"); capas++; }
+      grupo.nextElementSibling.hidden = false;
+      respondidas++;
+      document.getElementById("capas").textContent = "barniz " + "●".repeat(capas) + "○".repeat(5 - capas);
+      if (respondidas === 5) veredicto();
+    };
+  });
+});
+
+function veredicto() {
+  var t = [
+    ["Certificado de Rigor", "Ni una capa. Puede saltarse el máster; si ya lo pagó, no lo diga en voz alta."],
+    ["Barniz de una mano", "Se lija en una tarde con la <a href=\"https://nuevasomosaguas.github.io/biblioteca.html\">biblioteca</a>."],
+    ["Barniz de dos manos", "Recomendamos la <a href=\"https://nuevasomosaguas.github.io/guia_autodidacta.html\">guía autodidacta</a>, que cuesta 35.000 euros menos."],
+    ["Barniz de tres manos", "Empiece por los <a href=\"https://nuevasomosaguas.github.io/laboratorios-y-simulaciones/\">laboratorios</a>: se aprende tocando."],
+    ["Barniz de cuatro manos", "Ha acertado una. Estadísticamente, podría ser ruido."],
+    ["Certificado de Barniz Corporativo, acabado brillante", "Compatible con LinkedIn. Válido hasta la primera entrevista técnica."]
+  ][capas];
+  var v = document.getElementById("veredicto");
+  v.innerHTML = '<div class="diploma"><img src="logo.png" alt=""><p>La Nueva Somosaguas certifica que el portador ha respondido ' +
+    (5 - capas) + ' de 5 preguntas con rigor y ha acumulado ' + capas + (capas === 1 ? ' capa' : ' capas') + ' de barniz.</p>' +
+    '<p class="grande">' + t[0] + '</p><p>' + t[1] + '</p><p class="aviso" style="border:0;padding:0">Expedido gratis. Como todo aquí.</p></div>';
+  v.hidden = false;
+  v.scrollIntoView({ behavior: "smooth" });
+}
+
+// ---- 1. Colisionador: X, Z independientes; Y = X + Z + e; W = Z + u ----
+function colisionador() {
+  var n = 10000, sxx = 0, syy = 0, sxy = 0, sxw = 0, syw = 0;
+  for (var i = 0; i < n; i++) {
+    var x = normal(), z = normal(), y = x + z + normal(), w = z + normal();
+    sxx += x * x; syy += y * y; sxy += x * y; sxw += x * w; syw += y * w;
+  }
+  var sola = sxw / sxx, conY = (syy * sxw - sxy * syw) / (sxx * syy - sxy * sxy);
+  document.getElementById("s1").textContent =
+    "W ~ X        coeficiente de X = " + coma(sola, 3) + "   (correcto: ≈ 0)\n" +
+    "W ~ X + Y    coeficiente de X = " + coma(conY, 3) + "   (¡X perjudica a W! *** p < 0,001)\n\n" +
+    "Un efecto que no existe, con tres asteriscos. Lo puso usted al controlar por Y.";
+}
+
+// ---- 2. Benjamini-Hochberg sobre 1.000 nulas ----
+function bh(ps, q) {
+  var s = ps.slice().sort(function (a, b) { return a - b; }), m = s.length, k = 0;
+  for (var i = 1; i <= m; i++) if (s[i - 1] <= i / m * q) k = i;
+  return k;
+}
+console.assert(bh([0.0001,0.0004,0.0019,0.0095,0.0201,0.0278,0.0298,0.0344,0.0459,0.3240,0.4262,0.5719,0.6528,0.7590,1], 0.05) === 4, "bh roto");
+function consultora() {
+  var ps = [];
+  for (var i = 0; i < 1000; i++) ps.push(Math.random());
+  var sig = ps.filter(function (p) { return p < 0.05; }).length, k = bh(ps, 0.05);
+  document.getElementById("s2").textContent =
+    "INFORME EJECUTIVO · CONFIDENCIAL\n" +
+    "La campaña mueve " + sig + " métricas de forma estadísticamente significativa (p < 0,05).\n" +
+    "Recomendación: ampliar presupuesto un " + (10 + sig % 30) + "%.\n\n" +
+    "Tras Benjamini-Hochberg (q = 0,05): " + k + " descubrimientos.\n" +
+    (k ? "Se ha colado alguno. Con ruido puro pasa en uno de cada veinte informes, más o menos. Repita." : "Factura emitida igualmente.");
+}
+
+// ---- 4. Schelling, τ = 1/3, vecindad de Moore ----
+var N = 40, lienzo = document.getElementById("lienzo"), ctx = lienzo.getContext("2d"), corriendo = false;
+function vecinos(g, i) {
+  var r = (i / N) | 0, c = i % N, igual = 0, otro = 0;
+  for (var dr = -1; dr <= 1; dr++) for (var dc = -1; dc <= 1; dc++) {
+    if (!dr && !dc) continue;
+    var rr = r + dr, cc = c + dc;
+    if (rr < 0 || cc < 0 || rr >= N || cc >= N || !g[rr * N + cc]) continue;
+    g[rr * N + cc] === g[i] ? igual++ : otro++;
+  }
+  return [igual, otro];
+}
+function parecido(g) { // media de la fracción de vecinos del mismo grupo
+  var s = 0, n = 0;
+  for (var i = 0; i < g.length; i++) if (g[i]) { var v = vecinos(g, i); if (v[0] + v[1]) { s += v[0] / (v[0] + v[1]); n++; } }
+  return s / n;
+}
+function pintar(g) {
+  var css = getComputedStyle(document.documentElement), col = ["--bg", "--accent", "--text"].map(function (v) { return css.getPropertyValue(v).trim(); });
+  for (var i = 0; i < g.length; i++) { ctx.fillStyle = col[g[i]]; ctx.fillRect(i % N, (i / N) | 0, 1, 1); }
+}
+function barrio() {
+  for (var g = [], i = 0; i < N * N; i++) g.push(Math.random() < 0.1 ? 0 : Math.random() < 0.5 ? 1 : 2);
+  return g;
+}
+pintar(barrio());
+function schelling() {
+  if (corriendo) return;
+  corriendo = true;
+  var g = barrio(), inicio = parecido(g), ronda = 0, out = document.getElementById("s4");
+  (function paso() {
+    var infelices = [], vacias = [];
+    for (var i = 0; i < g.length; i++) {
+      if (!g[i]) { vacias.push(i); continue; }
+      var v = vecinos(g, i);
+      if (v[0] + v[1] && v[0] / (v[0] + v[1]) < 1 / 3) infelices.push(i);
+    }
+    infelices.forEach(function (i) {
+      var j = Math.floor(Math.random() * vacias.length), destino = vacias[j];
+      g[destino] = g[i]; g[i] = 0; vacias[j] = i;
+    });
+    pintar(g);
+    out.textContent = "Ronda " + ronda + " · se mudan " + infelices.length + "\n" +
+      "Vecinos del mismo grupo: al empezar " + coma(100 * inicio, 0) + "%, ahora " + coma(100 * parecido(g), 0) + "%\n" +
+      "Lo que cada uno exigía: 33%";
+    if (infelices.length && ++ronda < 200) setTimeout(paso, 80);
+    else { corriendo = false; out.textContent += "\n\nNadie es segregacionista. El barrio, sí."; }
+  })();
+}
+
+// ---- 5. Un cuaderno con estado oculto ----
+var celdas = ["x = 1", "x = x * 2", "print(x)"], contador, x;
+function reiniciar() {
+  contador = 0; x = undefined;
+  document.getElementById("cuaderno").innerHTML = celdas.map(function (c, i) {
+    return '<div class="celda" onclick="ejecutar(' + i + ', this)"><span class="n">In [ ]:</span><code>' + c + '</code></div>';
+  }).join("") + '<div class="salida" id="s5"></div>';
+}
+function ejecutar(i, el) {
+  el.querySelector(".n").textContent = "In [" + (++contador) + "]:";
+  var out = document.getElementById("s5");
+  if (i === 0) x = 1;
+  else if (x === undefined) { out.textContent = "NameError: name 'x' is not defined"; return; }
+  else if (i === 1) x *= 2;
+  else out.textContent = x + (contador > 3 ? "\n\n¿Lo reproduciría su tribunal con «Ejecutar todo»? Daría 2." : "");
+}
+reiniciar();
+</script>
+
+</body>
+</html>
